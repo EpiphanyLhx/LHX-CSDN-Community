@@ -67,7 +67,17 @@
                 </div>
               </el-tab-pane>
               <el-tab-pane label="我的收藏" name="collections">
-                <el-empty description="暂无收藏" />
+                <div v-loading="loading" class="article-list">
+                  <div v-for="post in myCollections" :key="post.id" class="post-item" @click="goToDetail(post.id)">
+                    <div class="post-title">{{ post.title }}</div>
+                    <div class="post-meta">
+                      <span class="time">{{ formatDate(post.createTime) }}</span>
+                      <span><el-icon><View /></el-icon> {{ post.viewCount || 0 }}</span>
+                      <span><el-icon><Star /></el-icon> {{ post.likeCount || 0 }}</span>
+                    </div>
+                  </div>
+                  <el-empty v-if="!loading && myCollections.length === 0" description="暂无收藏" />
+                </div>
               </el-tab-pane>
             </el-tabs>
           </el-card>
@@ -108,6 +118,7 @@ const loading = ref(false)
 const submitting = ref(false)
 const editDialogVisible = ref(false)
 const myArticles = ref([])
+const myCollections = ref([])
 
 // 1. 用户信息状态
 const userInfo = ref({

@@ -2,44 +2,38 @@
   <div class="home-container">
     <header class="navbar">
       <div class="nav-content">
-        <div class="nav-left">
-          <span class="logo">LF</span>
-          <span class="tagline">Tech Community</span>
+        <div class="brand">
+          <span class="logo-icon">♈️</span>
+          <span class="logo-text">LFJ CSDN社区</span>
         </div>
 
-        <div class="nav-center">
+        <div class="search-box">
           <el-input
-              v-model="searchText"
-              placeholder="搜索 Java, Spring Boot, Vue..."
-              class="search-bar"
-              @keyup.enter="onSearch"
-          >
-            <template #prefix><el-icon><Search /></el-icon></template>
-          </el-input>
-          <el-button type="primary" class="search-btn" @click="onSearch">搜索</el-button>
+              v-model="searchQuery"
+              placeholder="搜索文章、问答或技术标签..."
+              :prefix-icon="Search"
+              clearable
+              class="custom-search"
+          />
         </div>
 
-        <div class="nav-right">
-          <el-button type="danger" round icon="EditPen" class="publish-btn" @click="router.push('/publish')">
-            创作
+        <div class="user-actions">
+          <el-button type="primary" class="publish-btn" @click="router.push('/publish')">
+            <el-icon><EditPen /></el-icon> 发布文章
           </el-button>
 
-          <el-dropdown trigger="click">
-            <div class="user-profile">
-              <el-avatar :size="32" src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png" />
-              <span class="username">{{ userNickname }}</span>
-            </div>
+          <el-dropdown @command="handleCommand" trigger="click">
+            <span class="avatar-wrapper">
+              <el-avatar :size="38" src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png" />
+            </span>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item icon="User" @click="router.push('/user')">个人中心</el-dropdown-item>
-                <el-dropdown-item
-                    v-if="userNickname === '超级管理员'"
-                    icon="Setting"
-                    @click="router.push('/admin')"
-                >
-                  后台管理
+                <el-dropdown-item command="profile">
+                  <el-icon><User /></el-icon> 个人中心
                 </el-dropdown-item>
-                <el-dropdown-item divided icon="SwitchButton" @click="handleLogout">退出登录</el-dropdown-item>
+                <el-dropdown-item command="logout" divided style="color: #f56c6c;">
+                  <el-icon><SwitchButton /></el-icon> 退出登录
+                </el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
@@ -47,50 +41,56 @@
       </div>
     </header>
 
-    <main class="main-layout">
-      <el-row :gutter="20">
+    <main class="main-content">
+      <el-row :gutter="24">
         <el-col :span="18">
-          <div class="article-list-wrapper">
-            <div class="list-header">
-              <span class="active">最新博文</span>
-              <span>热门排行</span>
-            </div>
-
-            <div v-loading="loading" class="article-list">
-              <div v-for="item in articles" :key="item.id" class="article-item" @click="goToDetail(item.id)">
-                <div class="article-main">
-                  <h3 class="title">{{ item.title }}</h3>
-                  <p class="summary">{{ item.summary }}</p>
-                  <div class="meta">
-                    <el-tag size="small" type="info" effect="plain">{{ item.category }}</el-tag>
-                    <span class="author">作者ID: {{ item.authorId }}</span>
-                    <span class="stat"><el-icon><View /></el-icon> {{ item.viewCount || 0 }}</span>
-                    <span class="stat"><el-icon><Star /></el-icon> {{ item.likeCount || 0 }}</span>
+          <div class="article-feed">
+            <el-card v-for="i in 5" :key="i" class="article-card" shadow="hover">
+              <div class="article-content">
+                <h3 class="title" @click="goDetail(i)">Vue3 + SpringBoot3 打造高性能 LFJ 社区系统</h3>
+                <p class="summary">本文详细记录了从零开始搭建 LFJ CSDN 社区的全过程，涵盖了 JWT 鉴权、Vue Router 动态路由、Axios 拦截器以及 MySQL 数据库设计等核心技术栈，干货满满...</p>
+                <div class="meta-info">
+                  <div class="left-meta">
+                    <span class="author"><el-icon><User /></el-icon> 极客开发者</span>
+                    <span class="time"><el-icon><Clock /></el-icon> 2小时前</span>
+                    <span class="tags">
+                      <el-tag size="small" type="primary" effect="light">Vue.js</el-tag>
+                      <el-tag size="small" type="success" effect="light">Spring Boot</el-tag>
+                    </span>
+                  </div>
+                  <div class="right-meta">
+                    <span class="stat-item"><el-icon><View /></el-icon> 1.2k</span>
+                    <span class="stat-item"><el-icon><ChatDotRound /></el-icon> 38</span>
                   </div>
                 </div>
               </div>
-              <el-empty v-if="articles.length === 0" description="暂无内容，快去发布第一篇吧！" />
-            </div>
+            </el-card>
           </div>
         </el-col>
 
         <el-col :span="6">
-          <el-card class="sidebar-card" shadow="never">
-            <template #header><div class="card-title">🔥 热门搜索排行</div></template>
-            <div class="hot-list">
-              <div v-for="(hot, index) in hotTags" :key="index" class="hot-item">
-                <span :class="['rank', index < 3 ? 'top' : '']">{{ index + 1 }}</span>
-                <span class="name">{{ hot }}</span>
-              </div>
-            </div>
-          </el-card>
+          <div class="sidebar">
+            <el-card class="sidebar-card creator-card" shadow="never">
+              <div class="greeting">下午好，创造者！</div>
+              <p class="sub-greeting">今天想分享点什么硬核技术？</p>
+              <el-button type="primary" class="start-write-btn" @click="router.push('/publish')">开始写作</el-button>
+            </el-card>
 
-          <el-card class="sidebar-card mt-20" shadow="never">
-            <div class="ad-box">
-              <h4>LF 社区 2026 全新启航</h4>
-              <p>让技术交流更有温度</p>
-            </div>
-          </el-card>
+            <el-card class="sidebar-card tags-card" shadow="never">
+              <template #header>
+                <div class="card-header">
+                  <span class="header-title">🔥 热门技术标签</span>
+                </div>
+              </template>
+              <div class="tag-cloud">
+                <el-tag class="cloud-tag" type="info">Java 17</el-tag>
+                <el-tag class="cloud-tag" type="info">Redis 缓存</el-tag>
+                <el-tag class="cloud-tag" type="info">微服务架构</el-tag>
+                <el-tag class="cloud-tag" type="info">Element Plus</el-tag>
+                <el-tag class="cloud-tag" type="info">MySQL 优化</el-tag>
+              </div>
+            </el-card>
+          </div>
         </el-col>
       </el-row>
     </main>
@@ -98,127 +98,109 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { Search, EditPen, User, Setting, SwitchButton, View, Star } from '@element-plus/icons-vue'
-import axios from 'axios'
 import { ElMessage } from 'element-plus'
+import {
+  Search, EditPen, User, SwitchButton,
+  Clock, View, ChatDotRound
+} from '@element-plus/icons-vue'
 
 const router = useRouter()
-const searchText = ref('')
-const loading = ref(false)
-const articles = ref([])
+const searchQuery = ref('')
 
-// 从本地存储获取用户信息，默认为“游客”
-const userNickname = ref(localStorage.getItem('nickname') || '开发达人')
+// 点击文章标题跳转详情页 (暂时预留)
+const goDetail = (id) => {
+  ElMessage.success('准备跳转到文章详情页：' + id)
+  router.push(`/article/${id}`)
+}
 
-const hotTags = ['Java 21', 'Spring Boot 3', 'Redis 缓存', 'Vue 3 实战', 'MySQL 优化']
-
-// --- 获取文章列表 ---
-const fetchArticles = async () => {
-  loading.value = true
-  try {
-    const res = await axios.get('/api/article/list')
-    if (res.data.code === 200) {
-      articles.value = res.data.data
-    }
-  } catch (error) {
-    console.error('获取文章失败')
-  } finally {
-    loading.value = false
+// 处理右上角下拉菜单点击
+const handleCommand = (command) => {
+  if (command === 'profile') {
+    router.push('/user')
+  } else if (command === 'logout') {
+    localStorage.clear()
+    ElMessage.success('已安全退出 LFJ CSDN社区')
+    router.push('/login')
   }
 }
-
-// --- 搜索功能 ---
-const onSearch = () => {
-  if (!searchText.value.trim()) return
-  router.push({ path: '/search', query: { q: searchText.value } })
-}
-
-// --- 退出登录 ---
-const handleLogout = () => {
-  localStorage.clear()
-  ElMessage.success('已安全退出')
-  router.push('/login')
-}
-
-const goToDetail = (id) => router.push(`/article/${id}`)
-
-onMounted(fetchArticles)
 </script>
 
-<style lang="scss" scoped>
-.home-container { background-color: #f4f5f7; min-height: 100vh; }
+<style scoped>
+/* 整体页面背景 */
+.home-container { background-color: #f2f3f5; min-height: 100vh; padding-bottom: 40px; }
 
-/* 导航栏样式 */
+/* --- 1. 顶部导航栏 --- */
 .navbar {
-  height: 60px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-  position: sticky; top: 0; z-index: 1000;
-  .nav-content {
-    max-width: 1200px; margin: 0 auto; height: 100%;
-    display: flex; align-items: center; justify-content: space-between; padding: 0 20px;
-  }
-  .logo { font-size: 26px; font-weight: 900; color: #fc3d39; margin-right: 8px; }
-  .tagline { font-size: 14px; color: #999; font-weight: 500; }
+  background-color: #ffffff;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 1px 4px rgba(0,21,41,0.08);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.nav-content {
+  width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 24px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.brand { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.logo-icon { font-size: 28px; }
+.logo-text { font-size: 22px; font-weight: 800; color: #1e80ff; font-family: 'PingFang SC', sans-serif;}
 
-  .nav-center {
-    display: flex; gap: 10px;
-    .search-bar { width: 350px; :deep(.el-input__wrapper) { border-radius: 20px; background: #f4f5f7; box-shadow: none; } }
-    .search-btn { border-radius: 20px; }
-  }
-
-  .nav-right {
-    display: flex; align-items: center; gap: 20px;
-    .user-profile {
-      display: flex; align-items: center; gap: 8px; cursor: pointer;
-      .username { font-size: 14px; color: #333; }
-    }
-  }
+/* 搜索框美化 */
+.search-box { flex: 1; max-width: 400px; margin: 0 40px; }
+:deep(.custom-search .el-input__wrapper) {
+  border-radius: 20px;
+  background-color: #f2f3f5;
+  box-shadow: none;
+  transition: all 0.3s;
+}
+:deep(.custom-search .el-input__wrapper.is-focus) {
+  background-color: #ffffff;
+  box-shadow: 0 0 0 1px #1e80ff;
 }
 
-/* 主体布局 */
-.main-layout { max-width: 1200px; margin: 20px auto; padding: 0 20px; }
+/* 右侧用户区 */
+.user-actions { display: flex; align-items: center; gap: 20px; }
+.publish-btn { border-radius: 20px; padding: 8px 20px; }
+.avatar-wrapper { cursor: pointer; display: flex; align-items: center; transition: transform 0.2s; }
+.avatar-wrapper:hover { transform: scale(1.05); }
 
-/* 文章列表 */
-.article-list-wrapper {
-  background: #fff; border-radius: 8px; overflow: hidden;
-  .list-header {
-    padding: 15px 20px; border-bottom: 1px solid #f0f0f0; display: flex; gap: 30px;
-    span { font-size: 15px; color: #666; cursor: pointer; &.active { color: #fc3d39; font-weight: bold; } }
-  }
+/* --- 2. 主体内容区 --- */
+.main-content { max-width: 1200px; margin: 24px auto 0; padding: 0 24px; }
+
+/* 左侧文章卡片 */
+.article-card {
+  border-radius: 8px; border: none; margin-bottom: 16px; cursor: pointer;
+  transition: all 0.3s ease;
+}
+.article-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.08) !important; }
+.article-content { padding: 4px; }
+.article-content .title { margin: 0 0 10px 0; font-size: 18px; color: #1d2129; transition: color 0.3s; }
+.article-card:hover .title { color: #1e80ff; } /* 悬浮时标题变蓝 */
+.article-content .summary { font-size: 14px; color: #86909c; line-height: 1.6; margin-bottom: 16px;
+  /* 超过两行显示省略号 */
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
 }
 
-.article-item {
-  padding: 20px; border-bottom: 1px solid #f0f0f0; cursor: pointer; transition: 0.3s;
-  &:hover { background: #fafbfc; }
-  .title { margin: 0 0 10px; font-size: 18px; color: #222; }
-  .summary { font-size: 14px; color: #666; line-height: 1.6; margin-bottom: 15px; }
-  .meta {
-    display: flex; align-items: center; gap: 20px; color: #999; font-size: 13px;
-    .stat { display: flex; align-items: center; gap: 4px; }
-  }
-}
+/* 底部元信息 (作者、时间、标签) */
+.meta-info { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f2f3f5; padding-top: 12px; }
+.left-meta { display: flex; align-items: center; gap: 16px; font-size: 13px; color: #4e5969; }
+.left-meta span { display: flex; align-items: center; gap: 4px; }
+.right-meta { display: flex; gap: 16px; font-size: 13px; color: #86909c; }
 
-/* 侧边栏 */
-.sidebar-card {
-  border: none; border-radius: 8px;
-  .card-title { font-weight: bold; color: #333; }
-}
+/* --- 右侧边栏 --- */
+.sidebar-card { border-radius: 8px; border: none; margin-bottom: 16px; background: #ffffff; }
+.creator-card { text-align: center; padding: 10px 0; background: linear-gradient(135deg, #e8f3ff 0%, #ffffff 100%); }
+.greeting { font-size: 18px; font-weight: bold; color: #1d2129; margin-bottom: 8px; }
+.sub-greeting { font-size: 13px; color: #86909c; margin-bottom: 20px; }
+.start-write-btn { width: 100%; border-radius: 6px; }
 
-.hot-list {
-  .hot-item {
-    display: flex; align-items: center; gap: 12px; padding: 10px 0;
-    .rank { width: 18px; height: 18px; line-height: 18px; text-align: center; font-size: 12px; color: #999; border-radius: 2px; }
-    .rank.top { background: #ff9f43; color: #fff; }
-    .name { font-size: 14px; color: #444; cursor: pointer; &:hover { color: #fc3d39; } }
-  }
-}
-
-.ad-box {
-  text-align: center; padding: 10px;
-  h4 { color: #fc3d39; margin-bottom: 8px; }
-  p { font-size: 12px; color: #999; }
-}
-
-.mt-20 { margin-top: 20px; }
+.header-title { font-weight: bold; color: #1d2129; }
+.tag-cloud { display: flex; flex-wrap: wrap; gap: 10px; }
+.cloud-tag { border-radius: 4px; cursor: pointer; transition: all 0.2s; }
+.cloud-tag:hover { background-color: #1e80ff; color: white; border-color: #1e80ff; }
 </style>
