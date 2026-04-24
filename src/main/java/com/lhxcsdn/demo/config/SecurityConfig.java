@@ -36,6 +36,7 @@ public class SecurityConfig {
 
                 // 3. 配置路径放行规则
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/*.png", "/*.jpg", "/*.jpeg", "/*.gif", "/*.ico", "/assets/**", "/static/**").permitAll()
                         // 放行登录和注册接口
                         .requestMatchers("/api/user/login", "/api/user/register","/error").permitAll()
                         .requestMatchers("/api/favorite/**").permitAll()

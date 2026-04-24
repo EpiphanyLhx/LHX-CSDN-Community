@@ -52,7 +52,7 @@ public interface ArticleMapper {
      * 将用户在前端输入的评论内容存入数据库
      */
     @Insert("INSERT INTO comment(article_id, user_id, content, create_time) " +
-            "VALUES(#{article_id}, #{user_id}, #{content}, NOW())")
+            "VALUES(#{articleId}, #{userId}, #{content}, NOW())") // 修改为驼峰属性名
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insertComment(Comment comment);
 
