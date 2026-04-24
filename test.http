@@ -1,0 +1,9 @@
+### 测试用户注册
+POST http://localhost:8080/api/user/register
+Content-Type: application/json
+
+{
+  "username": "lhx_test",
+  "password": "123456",
+  "nickname": "代码小能手"
+}
