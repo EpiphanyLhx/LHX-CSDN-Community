@@ -167,6 +167,20 @@ const doLike = () => {
   }
 }
 
+// 在 ArticleDetail.vue 里的 script 中增加：
+const handleCollect = async () => {
+  try {
+    const res = await axios.post(`/api/favorite/toggle?articleId=${route.params.id}`)
+    if (res.data.code === 200) {
+      ElMessage.success(res.data.data) // 提示"收藏成功"或"已取消收藏"
+    } else {
+      ElMessage.warning(res.data.message)
+    }
+  } catch (error) {
+    ElMessage.error('请先登录')
+  }
+}
+
 const msg = (text) => ElMessage.success(text)
 
 // 简单时间格式化

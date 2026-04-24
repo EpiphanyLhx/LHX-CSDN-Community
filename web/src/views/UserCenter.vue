@@ -76,7 +76,7 @@
                       <span><el-icon><Star /></el-icon> {{ post.likeCount || 0 }}</span>
                     </div>
                   </div>
-                  <el-empty v-if="!loading && myCollections.length === 0" description="暂无收藏" />
+                  <el-empty v-if="!loading && myCollections.length === 0" description="您还没有收藏任何文章哦" />
                 </div>
               </el-tab-pane>
             </el-tabs>
@@ -170,6 +170,18 @@ const fetchMyArticles = async () => {
   }
 }
 
+const fetchMyCollections = async () => {
+  if (!userInfo.value.id) return
+  try {
+    const res = await axios.get('/api/favorite/my')
+    if (res.data.code === 200) {
+      myCollections.value = res.data.data
+    }
+  } catch (error) {
+    console.error('获取收藏失败', error)
+  }
+}
+
 // --- 资料更新提交 ---
 const handleUpdate = async () => {
   submitting.value = true
@@ -236,6 +248,7 @@ const goToDetail = (id) => router.push(`/article/${id}`)
 onMounted(async () => {
   await fetchUserInfo()
   fetchMyArticles()
+  fetchMyCollections()
   nextTick(() => {
     initChart()
   })

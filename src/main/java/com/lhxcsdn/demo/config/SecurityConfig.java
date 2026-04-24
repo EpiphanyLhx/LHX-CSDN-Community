@@ -38,8 +38,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 放行登录和注册接口
                         .requestMatchers("/api/user/login", "/api/user/register","/error").permitAll()
+                        .requestMatchers("/api/favorite/**").permitAll()
 
-                        // 放行所有文章相关的查询接口（允许游客查看文章列表和详情）
+                        // 放行所有文章相关的查询接口（允许游客查看文章列表和详情） cxv
                         .requestMatchers(HttpMethod.GET, "/api/article/**").permitAll()
                         .requestMatchers("/api/user/me", "/api/user/update").permitAll()
 

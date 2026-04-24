@@ -105,14 +105,23 @@ import {
   Search, EditPen, User, SwitchButton,
   Clock, View, ChatDotRound
 } from '@element-plus/icons-vue'
+import axios from 'axios'
 
 const router = useRouter()
 const searchQuery = ref('')
+const articleList = ref([])
 
 // 点击文章标题跳转详情页 (暂时预留)
-const goDetail = (id) => {
-  ElMessage.success('准备跳转到文章详情页：' + id)
-  router.push(`/article/${id}`)
+const fetchArticles = async () => {
+  try {
+    // 假设你的后端获取文章列表接口是 /api/article/list
+    const res = await axios.get('/api/article/list')
+    if (res.data.code === 200) {
+      articleList.value = res.data.data
+    }
+  } catch (error) {
+    console.error('获取文章列表失败', error)
+  }
 }
 
 // 处理右上角下拉菜单点击
@@ -125,6 +134,10 @@ const handleCommand = (command) => {
     router.push('/login')
   }
 }
+
+onMounted(() => {
+  fetchArticles()
+})
 </script>
 
 <style scoped>
