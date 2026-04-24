@@ -37,7 +37,7 @@ public class SecurityConfig {
                 // 3. 配置路径放行规则
                 .authorizeHttpRequests(auth -> auth
                         // 放行登录和注册接口
-                        .requestMatchers("/api/user/login", "/api/user/register").permitAll()
+                        .requestMatchers("/api/user/login", "/api/user/register","/error").permitAll()
 
                         // 放行所有文章相关的查询接口（允许游客查看文章列表和详情）
                         .requestMatchers(HttpMethod.GET, "/api/article/**").permitAll()

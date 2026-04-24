@@ -1,9 +1,9 @@
 package com.lhxcsdn.demo.controller;
 
 import com.lhxcsdn.demo.common.Result;
-// ✨ 修改点 1：确保指向你项目中真实的 User 路径
 import com.lhxcsdn.demo.pojo.entity.User;
 import com.lhxcsdn.demo.mapper.UserMapper;
+import com.lhxcsdn.demo.service.UserService; // 引入 UserService
 import com.lhxcsdn.demo.utils.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +17,20 @@ public class UserController {
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private UserService userService;
+
+    // ✨ 补上缺失的注册接口
+    @PostMapping("/register")
+    public Result register(@RequestBody User user) {
+        String msg = userService.register(user);
+        if ("注册成功".equals(msg)) {
+            return Result.success(msg);
+        } else {
+            return Result.error(msg);
+        }
+    }
 
     /**
      * 登录

@@ -94,8 +94,19 @@ const handleRegister = async () => {
   try {
     const res = await axios.post('/api/user/register', registerData)
     if (res.data.code === 200) {
-      ElMessage.success('注册成功！快去登录吧')
-      activeTab.value = 'login'
+      ElMessage.success('注册成功！正在为您自动登录...')
+
+      // ✅ 修复点 1：将错误的 loginForm 修正为包含注册账号密码的新对象
+      const loginRes = await axios.post('/api/user/login', {
+        username: registerData.username,
+        password: registerData.password
+      })
+
+      if (loginRes.data.code === 200) {
+        localStorage.setItem('token', loginRes.data.data.token)
+        localStorage.setItem('nickname', loginRes.data.data.nickname)
+        router.push('/home')
+      }
     } else {
       ElMessage.error(res.data.message)
     }
@@ -104,30 +115,34 @@ const handleRegister = async () => {
   } finally {
     loading.value = false
   }
+}
 
+// 登录请求
+const handleLogin = async () => {
+  if (!loginData.username || !loginData.password) {
+    return ElMessage.warning('请输入用户名和密码')
+  }
+  loading.value = true
   try {
-    const res = await axios.post('/api/user/login', loginForm)
+
+    const res = await axios.post('/api/user/login', loginData)
     if (res.data.code === 200) {
-      // ✨ 核心操作：把 Token 和昵称存入浏览器的本地存储
+      // 保存 Token 和用户信息
       localStorage.setItem('token', res.data.data.token)
       localStorage.setItem('nickname', res.data.data.nickname)
 
       ElMessage.success('欢迎回来，' + res.data.data.nickname)
       router.push('/home')
+    } else {
+      ElMessage.error(res.data.message || '账号或密码错误')
     }
   } catch (error) {
-    ElMessage.error('登录失败，请检查账号密码')
+    ElMessage.error('登录失败，请检查网络或后端服务')
+  } finally {
+    loading.value = false
   }
 }
 
-// 登录请求（模拟跳转）
-const handleLogin = () => {
-  loading.value = true
-  setTimeout(() => {
-    loading.value = false
-    router.push('/home')
-  }, 800)
-}
 </script>
 
 <style lang="scss" scoped>
