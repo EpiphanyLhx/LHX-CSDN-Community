@@ -56,7 +56,14 @@ const handlePublish = async () => {
 
   publishing.value = true
   try {
-    const res = await axios.post('/api/article/publish', articleData)
+    // ✨ 新增：获取 Token
+    const token = localStorage.getItem('token')
+
+    // ✨ 新增：在请求配置中携带 headers
+    const res = await axios.post('/api/article/publish', articleData, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+
     if (res.data.code === 200) {
       ElMessage.success('文章发布成功！')
       setTimeout(() => {

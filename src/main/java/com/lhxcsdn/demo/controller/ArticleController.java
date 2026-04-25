@@ -66,9 +66,11 @@ public class ArticleController {
         if (comment.getContent() == null || comment.getContent().trim().isEmpty()) {
             return Result.error("评论内容不能为空");
         }
-        Integer userId = getUserIdByToken(token);
+
+        // ✨ 确保这里使用的是 Long 类型声明
+        Long userId = Long.valueOf(getUserIdByToken(token));
         if (userId != null) {
-            comment.setUserId(Long.valueOf(userId)); // 绑定评论用户的 ID
+            comment.setUserId(userId);
         } else {
             return Result.error("请先登录");
         }
@@ -90,20 +92,32 @@ public class ArticleController {
     // 6. 发布文章
     @PostMapping("/publish")
     public Result publish(@RequestBody Article article, @RequestHeader(value = "Authorization", required = false) String token) {
-        Integer userId = getUserIdByToken(token);
+        // ✨ 确保这里使用的是 Long 类型声明
+        Long userId = getUserIdByToken(token);
         if (userId == null) {
             return Result.error("登录状态已过期，请重新登录");
         }
-        article.setAuthorId(Long.valueOf(userId)); // 绑定当前登录用户
+        article.setAuthorId(userId); // 绑定当前登录用户
         articleService.publishArticle(article);
         return Result.success("发布成功");
     }
 
-    private Integer getUserIdByToken(String token) {
+    /**
+     * ✨ 解析 Token 获取用户ID的方法
+     * 注意：这里的返回值必须是 Long，且转换逻辑已兼容 Integer -> Long
+     */
+    private Long getUserIdByToken(String token) {
         if (token == null || !token.startsWith("Bearer ")) return null;
         try {
-            return com.lhxcsdn.demo.utils.JwtUtils.parseToken(token.substring(7)).get("id", Integer.class);
+            // 先作为 Object 取出，避免直接强制转换成 Integer 报错
+            Object idObj = com.lhxcsdn.demo.utils.JwtUtils.parseToken(token.substring(7)).get("id");
+            if (idObj != null) {
+                // 统一转成字符串后再解析成 Long，这是最安全的类型转换方式
+                return Long.valueOf(idObj.toString());
+            }
+            return null;
         } catch (Exception e) {
+            e.printStackTrace();
             return null;
         }
     }
