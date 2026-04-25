@@ -11,6 +11,18 @@ spring:
     password: 123456
     type: com.alibaba.druid.pool.DruidDataSource
 
+  # SQL初始化配置
+  sql:
+    init:
+      mode: always  # 总是执行初始化SQL
+      schema-locations: classpath:schema.sql
+      data-locations: classpath:data.sql
+      platform: mysql
+      continue-on-error: true  # 如果表已存在，继续执行
+
+  web:
+    resources:
+      static-locations: classpath:/static/,file:./uploads/
 
   data:
     redis:

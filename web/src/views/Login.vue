@@ -4,7 +4,7 @@
       <div class="auth-brand">
         <div class="brand-content">
           <div class="logo-area">
-            <img src="https://csdnimg.cn/release/cms_static/re-pwa/images/csdn-logo.png" alt="logo">
+            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjM1IiB2aWV3Qm94PSIwIDAgMTUwIDM1IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMzUiIGZpbGw9IiNmZmZmZmYiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMzMzIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+TEYgQ29tbXVuaXR5PC90ZXh0Pjwvc3ZnPg==" alt="logo">
             <span class="divider"></span>
             <span class="platform-name">LF 社区</span>
           </div>
@@ -57,7 +57,7 @@
         <div class="social-login">
           <p>其他登录方式</p>
           <div class="social-icons">
-            <el-avatar :size="35" src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png" />
+            <el-avatar :size="35" src="/avatar/default.png" />
             <el-avatar :size="35" icon="ChatDotRound" />
             <el-avatar :size="35" icon="Platform" />
           </div>
@@ -105,7 +105,32 @@ const handleRegister = async () => {
       if (loginRes.data.code === 200) {
         localStorage.setItem('token', loginRes.data.data.token)
         localStorage.setItem('nickname', loginRes.data.data.nickname)
-        router.push('/home')
+        
+        // 获取用户详细信息（包含角色）
+        try {
+          const userRes = await axios.get('/api/user/me', {
+            headers: { Authorization: `Bearer ${loginRes.data.data.token}` }
+          })
+          if (userRes.data.code === 200) {
+            const userData = userRes.data.data
+            const roles = userData.roles || []
+            
+            // 判断是否为管理员角色
+            const adminRoles = ['SUPER_ADMIN', 'CONTENT_ADMIN', 'USER_ADMIN']
+            const isAdmin = roles.some(role => adminRoles.includes(role))
+            if (isAdmin) {
+              router.push('/admin')
+            } else {
+              router.push('/home')
+            }
+          } else {
+            // 如果获取用户信息失败，默认跳转到首页
+            router.push('/home')
+          }
+        } catch (e) {
+          // 如果获取用户信息失败，默认跳转到首页
+          router.push('/home')
+        }
       }
     } else {
       ElMessage.error(res.data.message)
@@ -132,7 +157,32 @@ const handleLogin = async () => {
       localStorage.setItem('nickname', res.data.data.nickname)
 
       ElMessage.success('欢迎回来，' + res.data.data.nickname)
-      router.push('/home')
+      
+      // 获取用户详细信息（包含角色）
+      try {
+        const userRes = await axios.get('/api/user/me', {
+          headers: { Authorization: `Bearer ${res.data.data.token}` }
+        })
+        if (userRes.data.code === 200) {
+          const userData = userRes.data.data
+          const roles = userData.roles || []
+          
+          // 判断是否为管理员角色
+          const adminRoles = ['SUPER_ADMIN', 'CONTENT_ADMIN', 'USER_ADMIN']
+          const isAdmin = roles.some(role => adminRoles.includes(role))
+          if (isAdmin) {
+            router.push('/admin')
+          } else {
+            router.push('/home')
+          }
+        } else {
+          // 如果获取用户信息失败，默认跳转到首页
+          router.push('/home')
+        }
+      } catch (e) {
+        // 如果获取用户信息失败，默认跳转到首页
+        router.push('/home')
+      }
     } else {
       ElMessage.error(res.data.message || '账号或密码错误')
     }

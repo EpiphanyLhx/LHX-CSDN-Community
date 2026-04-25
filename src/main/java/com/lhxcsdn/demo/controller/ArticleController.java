@@ -4,6 +4,7 @@ import com.lhxcsdn.demo.common.Result;
 import com.lhxcsdn.demo.pojo.entity.Article;
 import com.lhxcsdn.demo.pojo.entity.Comment;
 import com.lhxcsdn.demo.service.ArticleService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -66,16 +67,26 @@ public class ArticleController {
         if (comment.getContent() == null || comment.getContent().trim().isEmpty()) {
             return Result.error("评论内容不能为空");
         }
+        
+        if (comment.getArticleId() == null) {
+            return Result.error("文章ID不能为空");
+        }
 
         // ✨ 确保这里使用的是 Long 类型声明
-        Long userId = Long.valueOf(getUserIdByToken(token));
+        Long userId = getUserIdByToken(token);
         if (userId != null) {
             comment.setUserId(userId);
         } else {
             return Result.error("请先登录");
         }
-        articleService.saveComment(comment);
-        return Result.success("评论成功");
+        
+        try {
+            articleService.saveComment(comment);
+            return Result.success("评论成功");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Result.error("评论保存失败: " + e.getMessage());
+        }
     }
 
     /**
@@ -136,5 +147,31 @@ public class ArticleController {
         return Result.success(articleService.getHotArticles());
     }
 
+    /**
+     * 9. 删除文章（需要 sys:article:delete 权限）
+     */
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('sys:article:delete')")
+    public Result deleteArticle(@PathVariable Long id) {
+        try {
+            articleService.deleteArticle(id);
+            return Result.success("文章删除成功");
+        } catch (Exception e) {
+            return Result.error("删除文章失败: " + e.getMessage());
+        }
+    }
 
+    /**
+     * 10. 删除评论（需要 sys:comment:delete 权限）
+     */
+    @DeleteMapping("/comment/{commentId}")
+    @PreAuthorize("hasAuthority('sys:comment:delete')")
+    public Result deleteComment(@PathVariable Long commentId) {
+        try {
+            articleService.deleteComment(commentId);
+            return Result.success("评论删除成功");
+        } catch (Exception e) {
+            return Result.error("删除评论失败: " + e.getMessage());
+        }
+    }
 }

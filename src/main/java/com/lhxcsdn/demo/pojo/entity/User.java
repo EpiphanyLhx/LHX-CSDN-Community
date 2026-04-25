@@ -18,4 +18,9 @@ public class User {
     private String profession;
     private String education;
     private String tags;
+    
+    // 以下字段仅用于查询结果映射，不持久化到数据库
+    private String role;       // 角色代码（用于前端显示）
+    private String roleName;   // 角色名称
+    private String roleCode;   // 角色代码（别名，与role相同）
 }

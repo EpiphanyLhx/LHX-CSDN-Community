@@ -39,7 +39,7 @@
             </div>
             <div class="comment-list">
               <div v-for="c in comments" :key="c.id" class="comment-item">
-                <el-avatar :size="36" src="https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png" />
+                <el-avatar :size="36" src="/avatar/default.png" />
                 <div class="c-info">
                   <div class="c-user">{{ c.nickname || '匿名用户' }}</div>
                   <div class="c-text">{{ c.content }}</div>
@@ -101,6 +101,10 @@ const loadContent = async () => {
 const submitComment = async () => {
   if (!checkLogin()) return
   if (!myComment.value.trim()) return ElMessage.warning('内容不能为空')
+  if (!article.value.id) {
+    ElMessage.error('文章信息未加载，请刷新页面重试')
+    return
+  }
   try {
     const token = localStorage.getItem('token')
     const res = await axios.post('/api/article/comment', {
@@ -113,9 +117,12 @@ const submitComment = async () => {
       ElMessage.success('评论成功')
       myComment.value = ''
       loadContent()
+    } else {
+      ElMessage.error(res.data.message || '评论失败')
     }
   } catch (e) {
-    ElMessage.error('提交失败')
+    console.error('评论提交错误:', e)
+    ElMessage.error('网络错误，请稍后重试')
   }
 }
 

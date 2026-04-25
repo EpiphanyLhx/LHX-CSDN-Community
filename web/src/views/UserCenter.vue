@@ -2,7 +2,7 @@
   <div class="user-center-layout">
     <header class="uc-nav">
       <div class="nav-content" @click="router.push('/home')">
-        <span class="logo">LF</span>
+        <span class="logo">LFJ CSDN社区</span>
         <span class="back-text"><el-icon><ArrowLeft /></el-icon> 返回社区大厅</span>
       </div>
     </header>
@@ -11,8 +11,25 @@
       <el-row :gutter="24">
         <el-col :span="7">
           <el-card class="profile-card" shadow="never">
-            <div class="avatar-box">
-              <el-avatar :size="100" src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png" />
+            <div class="avatar-box" @click="triggerFileInput">
+              <el-avatar :size="100" :src="avatarPreview || userInfo.avatar || '/avatar/default.png'" />
+              <div class="avatar-overlay">
+                <el-icon><Camera /></el-icon>
+                <span>点击上传</span>
+              </div>
+              <input
+                ref="fileInput"
+                type="file"
+                accept="image/*"
+                style="display: none"
+                @change="handleAvatarUpload"
+              />
+            </div>
+            <div v-if="uploading" class="upload-status">
+              <el-progress type="circle" :percentage="uploadProgress" :width="60" />
+            </div>
+            <div v-if="uploadError" class="upload-error">
+              <el-alert :title="uploadError" type="error" show-icon :closable="true" @close="uploadError = ''" />
             </div>
             <h2 class="nickname">{{ userInfo.nickname || '未登录' }}</h2>
             <p class="bio">{{ userInfo.bio || '这个人很懒，还没写简介...' }}</p>
@@ -87,6 +104,9 @@
 
     <el-dialog v-model="editDialogVisible" title="完善个人名片" width="500px" append-to-body>
       <el-form :model="editForm" label-width="80px" label-position="left">
+        <el-form-item label="头像地址">
+          <el-input v-model="editForm.avatar" placeholder="请输入头像的网络URL图片链接" />
+        </el-form-item>
         <el-form-item label="昵称"><el-input v-model="editForm.nickname" /></el-form-item>
         <el-form-item label="个人简介"><el-input v-model="editForm.bio" type="textarea" :rows="3" /></el-form-item>
         <el-form-item label="所在地"><el-input v-model="editForm.location" /></el-form-item>
@@ -110,7 +130,7 @@ import {useRouter} from 'vue-router'
 import axios from 'axios'
 import * as echarts from 'echarts'
 import {ElMessage} from 'element-plus'
-import {ArrowLeft, Location, Suitcase, School, View, Star, Edit} from '@element-plus/icons-vue'
+import {ArrowLeft, Location, Suitcase, School, View, Star, Edit, Camera} from '@element-plus/icons-vue'
 
 const router = useRouter()
 const activeTab = ref('posts')
@@ -128,7 +148,8 @@ const userInfo = ref({
   location: '',
   profession: '',
   education: '',
-  tags: ''
+  tags: '',
+  avatar: ''
 })
 
 // 2. 编辑表单镜像数据
@@ -139,8 +160,17 @@ const editForm = reactive({
   location: '',
   profession: '',
   education: '',
-  tags: ''
+  tags: '',
+  avatar: ''
 })
+
+// 头像上传相关状态
+const fileInput = ref(null)
+const avatarPreview = ref('')
+const uploading = ref(false)
+const uploadProgress = ref(0)
+const uploadError = ref('')
+
 
 // --- 核心方法：获取当前登录用户信息 ---
 const fetchUserInfo = async () => {
@@ -203,6 +233,80 @@ const openEditDialog = () => {
   editDialogVisible.value = true
 }
 
+// --- 头像上传相关方法 ---
+const triggerFileInput = () => {
+  fileInput.value.click()
+}
+
+const handleAvatarUpload = async (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+  
+  // 验证文件类型
+  const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+  if (!validTypes.includes(file.type)) {
+    uploadError.value = '只支持 JPG、PNG、GIF、WebP 格式的图片'
+    return
+  }
+  
+  // 验证文件大小（限制为5MB）
+  const maxSize = 5 * 1024 * 1024 // 5MB
+  if (file.size > maxSize) {
+    uploadError.value = '图片大小不能超过5MB'
+    return
+  }
+  
+  // 预览图片
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    avatarPreview.value = e.target.result
+  }
+  reader.readAsDataURL(file)
+  
+  // 上传到服务器
+  uploading.value = true
+  uploadProgress.value = 0
+  uploadError.value = ''
+  
+  const formData = new FormData()
+  formData.append('file', file)
+  
+  try {
+    const token = localStorage.getItem('token')
+    const res = await axios.post('/api/user/upload-avatar', formData, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data'
+      },
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total) {
+          uploadProgress.value = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+        }
+      }
+    })
+    
+    if (res.data.code === 200) {
+      ElMessage.success('头像上传成功')
+      // 更新本地用户信息
+      userInfo.value.avatar = res.data.data.avatarUrl
+      // 清除预览
+      avatarPreview.value = ''
+      // 更新本地存储的头像信息（如果有）
+      // 可以触发事件通知其他组件
+    } else {
+      uploadError.value = res.data.message || '上传失败'
+    }
+  } catch (error) {
+    console.error('上传失败:', error)
+    uploadError.value = '网络错误，请稍后重试'
+  } finally {
+    uploading.value = false
+    uploadProgress.value = 0
+    // 清空文件输入，允许重复选择同一文件
+    event.target.value = ''
+  }
+}
+
 // --- 修复报错的核心：时间格式化函数 ---
 const formatDate = (dateStr) => {
   if (!dateStr) return '刚刚'
@@ -247,8 +351,8 @@ const goToDetail = (id) => router.push(`/article/${id}`)
 // --- 挂载逻辑 ---
 onMounted(async () => {
   await fetchUserInfo()
-  fetchMyArticles()
-  fetchMyCollections()
+  await fetchMyArticles()
+  await fetchMyCollections()
   nextTick(() => {
     initChart()
   })
@@ -413,5 +517,48 @@ onMounted(async () => {
 
 .mt-20 {
   margin-top: 20px;
+}
+
+.avatar-box {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  
+  &:hover .avatar-overlay {
+    opacity: 1;
+  }
+}
+
+.avatar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  
+  .el-icon {
+    font-size: 20px;
+    margin-bottom: 5px;
+  }
+}
+
+.upload-status {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+}
+
+.upload-error {
+  margin-top: 10px;
 }
 </style>
