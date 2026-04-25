@@ -60,11 +60,17 @@ public class ArticleController {
      * 4. 提交评论
      * @param comment 评论实体（包含 article_id, user_id, content）
      */
+    // src/main/java/com/lhxcsdn/demo/controller/ArticleController.java
     @PostMapping("/comment")
-    public Result addComment(@RequestBody Comment comment) {
-        // 简单校验：评论内容不能为空
+    public Result addComment(@RequestBody Comment comment, @RequestHeader(value = "Authorization", required = false) String token) {
         if (comment.getContent() == null || comment.getContent().trim().isEmpty()) {
             return Result.error("评论内容不能为空");
+        }
+        Integer userId = getUserIdByToken(token);
+        if (userId != null) {
+            comment.setUserId(Long.valueOf(userId)); // 绑定评论用户的 ID
+        } else {
+            return Result.error("请先登录");
         }
         articleService.saveComment(comment);
         return Result.success("评论成功");
@@ -83,15 +89,37 @@ public class ArticleController {
 
     // 6. 发布文章
     @PostMapping("/publish")
-    public Result publish(@RequestBody Article article) {
+    public Result publish(@RequestBody Article article, @RequestHeader(value = "Authorization", required = false) String token) {
+        Integer userId = getUserIdByToken(token);
+        if (userId == null) {
+            return Result.error("登录状态已过期，请重新登录");
+        }
+        article.setAuthorId(Long.valueOf(userId)); // 绑定当前登录用户
         articleService.publishArticle(article);
         return Result.success("发布成功");
+    }
+
+    private Integer getUserIdByToken(String token) {
+        if (token == null || !token.startsWith("Bearer ")) return null;
+        try {
+            return com.lhxcsdn.demo.utils.JwtUtils.parseToken(token.substring(7)).get("id", Integer.class);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     // 7. 全局搜索文章
     @GetMapping("/search")
     public Result search(@RequestParam String keyword) {
         return Result.success(articleService.search(keyword));
+    }
+
+    /**
+     * 8. 获取全站热度榜单
+     */
+    @GetMapping("/hot")
+    public Result getHotArticles() {
+        return Result.success(articleService.getHotArticles());
     }
 
 

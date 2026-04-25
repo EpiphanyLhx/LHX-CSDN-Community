@@ -42,11 +42,15 @@ public class ArticleServiceImpl implements ArticleService {
         articleMapper.addLikeCount(id);
     }
 
+    @Override
+    public List<Article> getHotArticles() {
+        return articleMapper.findHotArticles();
+    }
+
     // ServiceImpl 实现类
     @Override
     public void publishArticle(Article article) {
-        // 为了方便测试，暂时固定一个 author_id，实际应从登录 Token 中获取
-        article.setAuthorId(1L);
+
         // 自动截取正文前 50 个字作为摘要
         if(article.getSummary() == null && article.getContent() != null){
             String summary = article.getContent().length() > 50 ? article.getContent().substring(0, 50) + "..." : article.getContent();

@@ -28,4 +28,7 @@ public interface ArticleService {
     List<Article> getArticlesByAuthor(Long authorId);
 
     List<Article> search(String keyword);
+
+    // 获取热门文章排行榜
+    List<Article> getHotArticles();
 }

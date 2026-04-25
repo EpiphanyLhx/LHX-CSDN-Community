@@ -76,4 +76,11 @@ public interface ArticleMapper {
             "OR summary LIKE CONCAT('%', #{keyword}, '%') " +
             "ORDER BY create_time DESC")
     List<Article> searchArticles(String keyword);
+
+    /**
+     * 10. 获取热度排行榜文章
+     * 按照浏览量(view_count)降序排列，只取前 10 条
+     */
+    @Select("SELECT * FROM article ORDER BY view_count DESC LIMIT 10")
+    List<Article> findHotArticles();
 }

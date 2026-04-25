@@ -97,14 +97,17 @@ const loadContent = async () => {
   }
 }
 
-// 拦截点：提交评论
+// 提交评论
 const submitComment = async () => {
   if (!checkLogin()) return
   if (!myComment.value.trim()) return ElMessage.warning('内容不能为空')
   try {
+    const token = localStorage.getItem('token')
     const res = await axios.post('/api/article/comment', {
-      article_id: article.value.id,
+      articleId: article.value.id,
       content: myComment.value
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
     })
     if (res.data.code === 200) {
       ElMessage.success('评论成功')
@@ -116,7 +119,7 @@ const submitComment = async () => {
   }
 }
 
-// 拦截点：点赞
+// 点赞
 const doLike = async () => {
   if (!checkLogin()) return
   try {
@@ -130,10 +133,20 @@ const doLike = async () => {
   }
 }
 
-// 拦截点：收藏
-const handleCollect = () => {
+// 收藏
+const handleCollect = async () => {
   if (!checkLogin()) return
-  ElMessage.success('已加入收藏')
+  try {
+    const token = localStorage.getItem('token')
+    const res = await axios.post(`/api/favorite/toggle?articleId=${article.value.id}`, null, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    if (res.data.code === 200) {
+      ElMessage.success(res.data.data) // 显示 "收藏成功" 或 "已取消收藏"
+    }
+  } catch (e) {
+    ElMessage.error('操作失败')
+  }
 }
 
 onMounted(() => loadContent())

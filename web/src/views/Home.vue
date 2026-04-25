@@ -86,6 +86,26 @@
               <p class="sub-greeting">今天想分享点什么？</p>
               <el-button type="primary" class="start-write-btn" @click="handlePublish">开始写作</el-button>
             </el-card>
+
+            <el-card class="sidebar-card hot-card" shadow="never">
+              <template #header>
+                <div class="card-header">
+                  <span>🔥 全站热度榜</span>
+                </div>
+              </template>
+              <div class="hot-list">
+                <div
+                    v-for="(item, index) in hotArticles"
+                    :key="item.id"
+                    class="hot-item"
+                    @click="goDetail(item.id)"
+                >
+                  <span :class="['rank-num', index < 3 ? 'top-rank' : '']">{{ index + 1 }}</span>
+                  <span class="hot-title">{{ item.title }}</span>
+                  <span class="hot-views">{{ item.viewCount || 0 }} 阅</span>
+                </div>
+              </div>
+            </el-card>
           </div>
         </el-col>
       </el-row>
@@ -103,6 +123,20 @@ import { Search, EditPen, User, SwitchButton, Clock, View, ChatDotRound } from '
 const router = useRouter()
 const searchQuery = ref('')
 const articles = ref([])
+const hotArticles = ref([])
+
+// 获取热榜数据的方法
+const fetchHotArticles = async () => {
+  try {
+    const res = await axios.get('/api/article/hot')
+    if (res.data.code === 200) {
+      hotArticles.value = res.data.data
+    }
+  } catch (error) {
+    console.error('获取热榜失败', error)
+  }
+}
+
 
 // 计算属性：判断用户是否已登录
 const isLoggedIn = computed(() => !!localStorage.getItem('token'))
@@ -118,6 +152,7 @@ const fetchArticles = async () => {
 
 onMounted(() => {
   fetchArticles()
+  fetchHotArticles()
 })
 
 const goDetail = (id) => router.push(`/article/${id}`)
@@ -171,4 +206,15 @@ const formatDate = (dateStr) => {
 .sidebar-card { border-radius: 8px; border: none; margin-bottom: 16px; }
 .creator-card { text-align: center; background: linear-gradient(135deg, #e8f3ff 0%, #ffffff 100%); }
 .start-write-btn { width: 100%; border-radius: 6px; }
+/* web/src/views/Home.vue */
+/* 在 <style scoped> 末尾追加以下样式 */
+.hot-card {margin-top: 16px;}
+.card-header span {font-weight: bold;font-size: 16px;color: #1d2129;}
+.hot-item {display: flex;align-items: center;padding: 12px 0;cursor: pointer;border-bottom: 1px dashed #f2f3f5;transition: background-color 0.2s;}
+.hot-item:last-child {border-bottom: none;}
+.hot-item:hover .hot-title {color: #1e80ff; /* 悬浮时标题变蓝 */}
+.rank-num {width: 24px;font-weight: 900;color: #c9cdd4;font-style: italic;font-size: 15px;}
+.top-rank {color: #f53f3f; /* 前三名红色高亮 */font-size: 17px;}
+.hot-title {flex: 1;margin-left: 8px;margin-right: 12px;white-space: nowrap;overflow: hidden;text-overflow: ellipsis; /* 文字过长显示省略号 */font-size: 14px;color: #4e5969;}
+.hot-views {font-size: 12px;color: #86909c;white-space: nowrap;}
 </style>
